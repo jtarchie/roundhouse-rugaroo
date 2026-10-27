@@ -11,5 +11,6 @@ Gem::Specification.new do |s|
   s.homepage = "https://github.com/jtarchie/roundhouse-rugaroo"
   s.files = Dir["lib/**/*.rb"] + Dir["sig/**/*.rbs"] + ["README.md", "LICENSE"]
   s.required_ruby_version = ">= 3.3"
+  s.add_dependency "base64" # a bundled gem since Ruby 3.4; the gem and roundhouse's runtime both require it
   s.add_dependency "sqlite3", ">= 2.0"
 end
