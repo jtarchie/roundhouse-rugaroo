@@ -56,14 +56,14 @@ require "bundler/setup"
 require "roundhouse/rugaroo"
 
 ENV["BLOG_DB"] ||= File.expand_path("blog.sqlite3", __dir__)
-Tep.on_listen(lambda { |_port| nil }) if ENV["PORT"].nil? # `rugaroo build -trace` runs this once: boot, then stop
+Tep.on_listen(lambda { |_port| nil }) if ENV["PORT"].nil? # `rugaroo build` runs this once under Ruby to see what it loads: boot, then stop
 
 require_relative "blog/runtime/importmap"
 require_relative "blog/config/importmap"
 require_relative "blog/main"
 EOF
 sqlite3 blog.sqlite3 < blog/db/seed.sql
-rugaroo build -trace -o myblog serve.rb
+rugaroo build -gem blog/runtime -o myblog serve.rb   # blog/runtime is library code, compiled as a gem is
 
 # Run it, compiled or on MRI
 PORT=3000 ./myblog          # then open http://localhost:3000/posts
@@ -71,7 +71,9 @@ PORT=3000 ruby serve.rb
 ```
 
 `PORT` must be set: without it the program boots and stops, which is how
-`rugaroo build -trace` runs it once under MRI to see what it loads.
+`rugaroo build` runs it once under MRI to see what it loads. `-gem blog/runtime`
+says that directory is a library the app carries (roundhouse's runtime), so
+rugaroo compiles it as it compiles an installed gem: only what the app reaches.
 
 ## What `serve.rb` does
 
