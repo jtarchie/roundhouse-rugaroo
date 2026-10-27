@@ -22,7 +22,6 @@ macOS on Apple silicon.
 ```sh
 # Tools
 gem install rails -v 8.1.4
-gem install roundhouse-rugaroo
 go install github.com/jtarchie/rugaroo/cmd/rugaroo@main
 gh release download v2026.9.18 -R rubys/roundhouse -p 'roundhouse-aarch64-apple-darwin.tar.xz'
 tar xf roundhouse-aarch64-apple-darwin.tar.xz
@@ -42,11 +41,18 @@ roundhouse --target spinel -o myblog-go/blog myblog
 
 # Plain Ruby → one Go binary
 cd myblog-go
+cat > Gemfile <<'EOF'
+source "https://rubygems.org"
+gem "roundhouse-rugaroo", github: "jtarchie/roundhouse-rugaroo"
+EOF
+bundle install
 cat > serve.rb <<'EOF'
 # nil_check: runtime
 $LOADED_FEATURES << File.expand_path("blog/runtime/tep/tep.rb", __dir__)
 $LOADED_FEATURES << File.expand_path("blog/runtime/db.rb", __dir__)
 $LOAD_PATH.unshift(File.expand_path("blog/runtime", __dir__))
+ENV["BUNDLE_GEMFILE"] = File.expand_path("Gemfile", __dir__)
+require "bundler/setup"
 require "roundhouse/rugaroo"
 
 ENV["BLOG_DB"] ||= File.expand_path("blog.sqlite3", __dir__)
@@ -72,6 +78,8 @@ PORT=3000 ruby serve.rb
 - The two `$LOADED_FEATURES` lines mark roundhouse's tep server and FFI sqlite
   files as loaded, so the app's own `require_relative`s skip them and this gem's
   versions stand in. rugaroo honours the same lines at compile time.
+- `bundler/setup` finds this gem through the `Gemfile` beside `serve.rb`, as a
+  Rails app's `config/boot.rb` does.
 - `blog/runtime/` goes on `$LOAD_PATH`: the gem reuses tep's own pure-Ruby
   request parser from there, and rugaroo compiles that directory as it compiles
   a gem (only what the app reaches).
